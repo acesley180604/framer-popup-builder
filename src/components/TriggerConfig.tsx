@@ -8,6 +8,9 @@ const TRIGGER_DESCRIPTIONS: Record<TriggerType, string> = {
     click: "Shows when visitor clicks a specific element (CSS selector)",
     "page-load": "Shows immediately when the page loads",
     inactivity: "Shows after visitor becomes idle on the page",
+    adblock: "Shows when an ad blocker is detected",
+    "scroll-to-element": "Shows when a specific element scrolls into view",
+    "purchase-event": "Shows after a purchase or checkout event",
 }
 
 export default function TriggerConfig() {

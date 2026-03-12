@@ -1,5 +1,6 @@
 {
-  "id": "popup-builder",
+  "id": "f4fc61",
   "name": "Popup Builder",
-  "modes": ["canvas"]
+  "modes": ["canvas"],
+  "icon": "/icon.svg"
 }

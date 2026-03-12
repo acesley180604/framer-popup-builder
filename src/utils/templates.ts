@@ -1,4 +1,17 @@
 import type { PopupConfig, TriggerConfig, PopupType } from "./defaults"
+import {
+    DEFAULT_COUNTDOWN_CONFIG,
+    DEFAULT_CONTENT_LOCKER_CONFIG,
+    DEFAULT_SPIN_WHEEL_CONFIG,
+    DEFAULT_MULTI_STEP_CONFIG,
+} from "./defaults"
+
+const defaultAdvancedFeatures = {
+    countdown: { ...DEFAULT_COUNTDOWN_CONFIG },
+    contentLocker: { ...DEFAULT_CONTENT_LOCKER_CONFIG },
+    spinWheel: { ...DEFAULT_SPIN_WHEEL_CONFIG },
+    multiStep: { ...DEFAULT_MULTI_STEP_CONFIG },
+} as const
 
 export interface PopupTemplate {
     id: string
@@ -49,6 +62,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
             formFields: [
                 { id: "email", type: "email", label: "Email", placeholder: "your@email.com", required: true },
             ],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -88,6 +102,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
             formFields: [
                 { id: "email", type: "email", label: "Email", placeholder: "your@email.com", required: true },
             ],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -125,6 +140,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
             successMessage: "",
             redirectUrl: "",
             formFields: [],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -162,6 +178,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
             successMessage: "",
             redirectUrl: "",
             formFields: [],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -201,6 +218,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
             formFields: [
                 { id: "email", type: "email", label: "Email", placeholder: "your@email.com", required: true },
             ],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -241,6 +259,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
                 { id: "email", type: "email", label: "Email", placeholder: "your@email.com", required: false },
                 { id: "feedback", type: "custom", label: "Feedback", placeholder: "What can we improve?", required: true },
             ],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -281,6 +300,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
                 { id: "name", type: "name", label: "Name", placeholder: "Your name", required: true },
                 { id: "email", type: "email", label: "Email", placeholder: "your@email.com", required: true },
             ],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -321,6 +341,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
                 { id: "name", type: "name", label: "Name", placeholder: "Your name", required: true },
                 { id: "email", type: "email", label: "Email", placeholder: "your@email.com", required: true },
             ],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -358,6 +379,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
             successMessage: "",
             redirectUrl: "",
             formFields: [],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -395,6 +417,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
             successMessage: "",
             redirectUrl: "",
             formFields: [],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -432,6 +455,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
             successMessage: "Redirecting to checkout...",
             redirectUrl: "",
             formFields: [],
+            ...defaultAdvancedFeatures,
         },
     },
     {
@@ -469,6 +493,7 @@ export const POPUP_TEMPLATES: PopupTemplate[] = [
             successMessage: "Your code: WELCOME10",
             redirectUrl: "",
             formFields: [],
+            ...defaultAdvancedFeatures,
         },
     },
 ]

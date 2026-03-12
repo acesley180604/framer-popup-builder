@@ -8,6 +8,7 @@ import type {
     ABTestConfig,
     IntegrationConfig,
     AnalyticsSummary,
+    RevenueTrackingConfig,
 } from "@/utils/defaults"
 import {
     DEFAULT_POPUP_CONFIG,
@@ -15,6 +16,7 @@ import {
     DEFAULT_TARGETING_CONFIG,
     DEFAULT_AB_CONFIG,
     DEFAULT_ANALYTICS,
+    DEFAULT_REVENUE_TRACKING_CONFIG,
 } from "@/utils/defaults"
 
 // ── Local storage persistence ────────────────────────────────────────────────
@@ -91,12 +93,13 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
             id: crypto.randomUUID(),
             name,
             status: "draft",
-            popup_config: { ...DEFAULT_POPUP_CONFIG, formFields: [...DEFAULT_POPUP_CONFIG.formFields] },
-            trigger_config: DEFAULT_TRIGGER_CONFIG.map((t) => ({ ...t, config: { ...t.config } })),
-            targeting_config: { ...DEFAULT_TARGETING_CONFIG, pageRules: [] },
-            ab_test_config: { ...DEFAULT_AB_CONFIG, variants: [] },
+            popup_config: structuredClone(DEFAULT_POPUP_CONFIG),
+            trigger_config: structuredClone(DEFAULT_TRIGGER_CONFIG),
+            targeting_config: structuredClone(DEFAULT_TARGETING_CONFIG),
+            ab_test_config: structuredClone(DEFAULT_AB_CONFIG),
             integrations: [],
-            analytics: { ...DEFAULT_ANALYTICS, dailyStats: [], deviceBreakdown: [] },
+            analytics: structuredClone(DEFAULT_ANALYTICS),
+            revenue_tracking: structuredClone(DEFAULT_REVENUE_TRACKING_CONFIG),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         }
@@ -138,7 +141,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
             id: crypto.randomUUID(),
             name: `${source.name} (copy)`,
             status: "draft",
-            analytics: { ...DEFAULT_ANALYTICS, dailyStats: [], deviceBreakdown: [] },
+            analytics: structuredClone(DEFAULT_ANALYTICS),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         }
@@ -163,14 +166,12 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         const { _saveTimer } = get()
         if (_saveTimer) clearTimeout(_saveTimer)
 
-        // Optimistic local update immediately
         set((state) => ({
             campaigns: state.campaigns.map((c) =>
                 c.id === id ? { ...c, ...updates, updated_at: new Date().toISOString() } : c
             ),
             saving: true,
             _saveTimer: setTimeout(() => {
-                // Persist to localStorage
                 const campaigns = get().campaigns
                 saveCampaigns(campaigns)
                 set({ saving: false, _saveTimer: null })
@@ -189,6 +190,7 @@ export {
     DEFAULT_TARGETING_CONFIG,
     DEFAULT_AB_CONFIG,
     DEFAULT_ANALYTICS,
+    DEFAULT_REVENUE_TRACKING_CONFIG,
 }
 
 export type {
@@ -200,4 +202,5 @@ export type {
     ABTestConfig,
     IntegrationConfig,
     AnalyticsSummary,
+    RevenueTrackingConfig,
 }
