@@ -8,7 +8,7 @@ const FIELD_TYPES: { value: FormField["type"]; label: string }[] = [
     { value: "custom", label: "Custom Text" },
 ]
 
-export default function FormBuilder() {
+export function FormBuilder() {
     const { activeCampaign, autoSave } = useCampaignStore()
     const campaign = activeCampaign()
 
@@ -18,7 +18,7 @@ export default function FormBuilder() {
     const fields = config.formFields ?? []
 
     const updateFields = (newFields: FormField[]) => {
-        autoSave(campaign.id, { popup_config: { ...config, formFields: newFields } })
+        void autoSave(campaign.id, { popup_config: { ...config, formFields: newFields } })
     }
 
     const addField = () => {
@@ -79,45 +79,17 @@ export default function FormBuilder() {
                         <div key={field.id} className="card">
                             <div className="row-between" style={{ marginBottom: 8 }}>
                                 <div className="row gap-4">
-                                    <button
-                                        className="btn-secondary"
-                                        style={{ padding: "2px 6px", fontSize: 10 }}
-                                        onClick={() => moveField(index, -1)}
-                                        disabled={index === 0}
-                                        title="Move up"
-                                    >
-                                        Up
-                                    </button>
-                                    <button
-                                        className="btn-secondary"
-                                        style={{ padding: "2px 6px", fontSize: 10 }}
-                                        onClick={() => moveField(index, 1)}
-                                        disabled={index === fields.length - 1}
-                                        title="Move down"
-                                    >
-                                        Dn
-                                    </button>
-                                    <span style={{ fontSize: 11, fontWeight: 500 }}>
-                                        {field.label}
-                                    </span>
+                                    <button className="btn-secondary" style={{ padding: "2px 6px", fontSize: 10 }} onClick={() => moveField(index, -1)} disabled={index === 0} title="Move up">Up</button>
+                                    <button className="btn-secondary" style={{ padding: "2px 6px", fontSize: 10 }} onClick={() => moveField(index, 1)} disabled={index === fields.length - 1} title="Move down">Dn</button>
+                                    <span style={{ fontSize: 11, fontWeight: 500 }}>{field.label}</span>
                                 </div>
-                                <button className="btn-danger" onClick={() => removeField(field.id)}>
-                                    Remove
-                                </button>
+                                <button className="btn-danger" onClick={() => removeField(field.id)}>Remove</button>
                             </div>
 
                             <div className="grid-2" style={{ gap: 8 }}>
                                 <div>
                                     <label>Type</label>
-                                    <select
-                                        value={field.type}
-                                        onChange={(e) =>
-                                            updateField(field.id, {
-                                                type: e.target.value as FormField["type"],
-                                                label: e.target.value === "custom" ? field.label : e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1),
-                                            })
-                                        }
-                                    >
+                                    <select value={field.type} onChange={(e) => updateField(field.id, { type: e.target.value as FormField["type"], label: e.target.value === "custom" ? field.label : e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1) })}>
                                         {FIELD_TYPES.map((ft) => (
                                             <option key={ft.value} value={ft.value}>{ft.label}</option>
                                         ))}
@@ -125,27 +97,15 @@ export default function FormBuilder() {
                                 </div>
                                 <div>
                                     <label>Label</label>
-                                    <input
-                                        type="text"
-                                        value={field.label}
-                                        onChange={(e) => updateField(field.id, { label: e.target.value })}
-                                    />
+                                    <input type="text" value={field.label} onChange={(e) => updateField(field.id, { label: e.target.value })} />
                                 </div>
                                 <div>
                                     <label>Placeholder</label>
-                                    <input
-                                        type="text"
-                                        value={field.placeholder}
-                                        onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
-                                    />
+                                    <input type="text" value={field.placeholder} onChange={(e) => updateField(field.id, { placeholder: e.target.value })} />
                                 </div>
                                 <div>
                                     <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 16 }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={field.required}
-                                            onChange={(e) => updateField(field.id, { required: e.target.checked })}
-                                        />
+                                        <input type="checkbox" checked={field.required} onChange={(e) => updateField(field.id, { required: e.target.checked })} />
                                         <span>Required</span>
                                     </label>
                                 </div>
@@ -157,34 +117,20 @@ export default function FormBuilder() {
 
             {/* Quick add presets */}
             <section>
-                <h3 style={{ marginBottom: 8, color: "var(--framer-color-text-secondary)" }}>
-                    Quick Add
-                </h3>
+                <h3 style={{ marginBottom: 8, color: "var(--framer-color-text-secondary)" }}>Quick Add</h3>
                 <div className="row gap-6">
                     {[
                         { type: "email" as const, label: "Email", placeholder: "your@email.com" },
                         { type: "name" as const, label: "Name", placeholder: "Your name" },
                         { type: "phone" as const, label: "Phone", placeholder: "+1 (555) 000-0000" },
-                    ]
-                        .filter((preset) => !fields.some((f) => f.type === preset.type))
-                        .map((preset) => (
-                            <button
-                                key={preset.type}
-                                className="btn-secondary"
-                                onClick={() => {
-                                    const newField: FormField = {
-                                        id: Date.now().toString(),
-                                        type: preset.type,
-                                        label: preset.label,
-                                        placeholder: preset.placeholder,
-                                        required: preset.type === "email",
-                                    }
-                                    updateFields([...fields, newField])
-                                }}
-                            >
-                                + {preset.label}
-                            </button>
-                        ))}
+                    ].filter((preset) => !fields.some((f) => f.type === preset.type)).map((preset) => (
+                        <button key={preset.type} className="btn-secondary" onClick={() => {
+                            const newField: FormField = { id: Date.now().toString(), type: preset.type, label: preset.label, placeholder: preset.placeholder, required: preset.type === "email" }
+                            updateFields([...fields, newField])
+                        }}>
+                            + {preset.label}
+                        </button>
+                    ))}
                 </div>
             </section>
 

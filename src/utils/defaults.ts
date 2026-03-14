@@ -42,6 +42,33 @@ export type CountdownExpiredBehavior = "hide" | "message" | "redirect"
 export type ContentLockMode = "blur" | "hide"
 export type ContentLockDuration = "session" | "permanent"
 
+// ── Video Popup ─────────────────────────────────────────────────────────
+export interface VideoConfig {
+    enabled: boolean
+    url: string
+    autoplay: boolean
+    muted: boolean
+}
+
+// ── Campaign Scheduling ─────────────────────────────────────────────────
+export interface ScheduleConfig {
+    enabled: boolean
+    startDate: string | null
+    endDate: string | null
+    timezone: string
+}
+
+// ── Advanced Styling ────────────────────────────────────────────────────
+export interface AdvancedStyleConfig {
+    backdropBlur: number
+    borderWidth: number
+    borderColor: string
+    titleFontSize: number
+    bodyFontSize: number
+    buttonFontSize: number
+    padding: number
+}
+
 // ── Multi-Step ───────────────────────────────────────────────────────────────
 
 export interface MultiStepChoice {
@@ -181,6 +208,9 @@ export interface PopupConfig {
     contentLocker: ContentLockerConfig
     spinWheel: SpinWheelConfig
     multiStep: MultiStepConfig
+    video: VideoConfig
+    advancedStyle: AdvancedStyleConfig
+    forcedInteraction: boolean
 }
 
 export interface TriggerConfig {
@@ -276,6 +306,7 @@ export interface Campaign {
     integrations: IntegrationConfig[]
     analytics: AnalyticsSummary
     revenue_tracking: RevenueTrackingConfig
+    schedule: ScheduleConfig
     created_at: string
     updated_at: string
 }
@@ -333,6 +364,30 @@ export const DEFAULT_MULTI_STEP_CONFIG: MultiStepConfig = {
     entryStepId: "",
 }
 
+export const DEFAULT_VIDEO_CONFIG: VideoConfig = {
+    enabled: false,
+    url: "",
+    autoplay: false,
+    muted: true,
+}
+
+export const DEFAULT_SCHEDULE_CONFIG: ScheduleConfig = {
+    enabled: false,
+    startDate: null,
+    endDate: null,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+}
+
+export const DEFAULT_ADVANCED_STYLE_CONFIG: AdvancedStyleConfig = {
+    backdropBlur: 0,
+    borderWidth: 0,
+    borderColor: "#e5e7eb",
+    titleFontSize: 22,
+    bodyFontSize: 14,
+    buttonFontSize: 14,
+    padding: 28,
+}
+
 export const DEFAULT_GEO_TARGETING_CONFIG: GeoTargetingConfig = {
     enabled: false,
     rules: [],
@@ -369,6 +424,9 @@ export const DEFAULT_POPUP_CONFIG: PopupConfig = {
     contentLocker: { ...DEFAULT_CONTENT_LOCKER_CONFIG },
     spinWheel: { ...DEFAULT_SPIN_WHEEL_CONFIG },
     multiStep: { ...DEFAULT_MULTI_STEP_CONFIG },
+    video: { ...DEFAULT_VIDEO_CONFIG },
+    advancedStyle: { ...DEFAULT_ADVANCED_STYLE_CONFIG },
+    forcedInteraction: false,
 }
 
 export const DEFAULT_TRIGGER_CONFIG: TriggerConfig[] = [

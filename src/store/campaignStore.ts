@@ -9,6 +9,7 @@ import type {
     IntegrationConfig,
     AnalyticsSummary,
     RevenueTrackingConfig,
+    ScheduleConfig,
 } from "@/utils/defaults"
 import {
     DEFAULT_POPUP_CONFIG,
@@ -17,6 +18,7 @@ import {
     DEFAULT_AB_CONFIG,
     DEFAULT_ANALYTICS,
     DEFAULT_REVENUE_TRACKING_CONFIG,
+    DEFAULT_SCHEDULE_CONFIG,
 } from "@/utils/defaults"
 
 // ── Local storage persistence ────────────────────────────────────────────────
@@ -100,6 +102,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
             integrations: [],
             analytics: structuredClone(DEFAULT_ANALYTICS),
             revenue_tracking: structuredClone(DEFAULT_REVENUE_TRACKING_CONFIG),
+            schedule: structuredClone(DEFAULT_SCHEDULE_CONFIG),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         }
@@ -191,6 +194,7 @@ export {
     DEFAULT_AB_CONFIG,
     DEFAULT_ANALYTICS,
     DEFAULT_REVENUE_TRACKING_CONFIG,
+    DEFAULT_SCHEDULE_CONFIG,
 }
 
 export type {
@@ -203,4 +207,5 @@ export type {
     IntegrationConfig,
     AnalyticsSummary,
     RevenueTrackingConfig,
+    ScheduleConfig,
 }

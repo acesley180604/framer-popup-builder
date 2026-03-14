@@ -10,10 +10,10 @@ const TRIGGER_DESCRIPTIONS: Record<TriggerType, string> = {
     inactivity: "Shows after visitor becomes idle on the page",
     adblock: "Shows when an ad blocker is detected",
     "scroll-to-element": "Shows when a specific element scrolls into view",
-    "purchase-event": "Shows after a purchase or checkout event",
+    "purchase-event": "Shows after a custom purchase/conversion event fires",
 }
 
-export default function TriggerConfig() {
+export function TriggerConfig() {
     const { activeCampaign, autoSave } = useCampaignStore()
     const campaign = activeCampaign()
 
@@ -25,14 +25,14 @@ export default function TriggerConfig() {
         const updated = triggers.map((t, i) =>
             i === index ? { ...t, enabled: !t.enabled } : t
         )
-        autoSave(campaign.id, { trigger_config: updated })
+        void autoSave(campaign.id, { trigger_config: updated })
     }
 
     const updateConfig = (index: number, key: string, value: number | string) => {
         const updated = triggers.map((t, i) =>
             i === index ? { ...t, config: { ...t.config, [key]: value } } : t
         )
-        autoSave(campaign.id, { trigger_config: updated })
+        void autoSave(campaign.id, { trigger_config: updated })
     }
 
     return (
@@ -42,23 +42,13 @@ export default function TriggerConfig() {
             </p>
 
             {triggers.map((trigger, index) => (
-                <div
-                    key={trigger.type}
-                    className={trigger.enabled ? "card card-active" : "card"}
-                >
+                <div key={trigger.type} className={trigger.enabled ? "card card-active" : "card"}>
                     <div className="row-between" style={{ marginBottom: 6 }}>
                         <div>
-                            <h3 className="capitalize">
-                                {trigger.type.replace(/-/g, " ")}
-                            </h3>
-                            <p style={{ fontSize: 10, marginTop: 2 }}>
-                                {TRIGGER_DESCRIPTIONS[trigger.type]}
-                            </p>
+                            <h3 className="capitalize">{trigger.type.replace(/-/g, " ")}</h3>
+                            <p style={{ fontSize: 10, marginTop: 2 }}>{TRIGGER_DESCRIPTIONS[trigger.type]}</p>
                         </div>
-                        <button
-                            onClick={() => toggleTrigger(index)}
-                            className={`toggle ${trigger.enabled ? "on" : ""}`}
-                        >
+                        <button onClick={() => toggleTrigger(index)} className={`toggle ${trigger.enabled ? "on" : ""}`}>
                             <span className="toggle-knob" />
                         </button>
                     </div>
@@ -68,64 +58,27 @@ export default function TriggerConfig() {
                             {trigger.type === "time-delay" && (
                                 <div>
                                     <label>Delay (seconds)</label>
-                                    <input
-                                        type="number"
-                                        className="compact"
-                                        min={1}
-                                        max={120}
-                                        value={(trigger.config.seconds as number) ?? 5}
-                                        onChange={(e) =>
-                                            updateConfig(index, "seconds", parseInt(e.target.value))
-                                        }
-                                    />
+                                    <input type="number" className="compact" min={1} max={120} value={(trigger.config.seconds as number) ?? 5} onChange={(e) => updateConfig(index, "seconds", parseInt(e.target.value))} />
                                 </div>
                             )}
                             {trigger.type === "scroll" && (
                                 <div>
                                     <label>Scroll percentage</label>
-                                    <input
-                                        type="range"
-                                        min={10}
-                                        max={90}
-                                        step={5}
-                                        value={(trigger.config.percentage as number) ?? 50}
-                                        onChange={(e) =>
-                                            updateConfig(index, "percentage", parseInt(e.target.value))
-                                        }
-                                    />
-                                    <span style={{ fontSize: 11, color: "var(--framer-color-text-tertiary)" }}>
-                                        {trigger.config.percentage}%
-                                    </span>
+                                    <input type="range" min={10} max={90} step={5} value={(trigger.config.percentage as number) ?? 50} onChange={(e) => updateConfig(index, "percentage", parseInt(e.target.value))} />
+                                    <span style={{ fontSize: 11, color: "var(--framer-color-text-tertiary)" }}>{trigger.config.percentage}%</span>
                                 </div>
                             )}
                             {trigger.type === "exit-intent" && (
                                 <div>
                                     <label>Sensitivity (px from top)</label>
-                                    <input
-                                        type="range"
-                                        min={5}
-                                        max={50}
-                                        value={(trigger.config.sensitivity as number) ?? 20}
-                                        onChange={(e) =>
-                                            updateConfig(index, "sensitivity", parseInt(e.target.value))
-                                        }
-                                    />
-                                    <span style={{ fontSize: 11, color: "var(--framer-color-text-tertiary)" }}>
-                                        {trigger.config.sensitivity}px
-                                    </span>
+                                    <input type="range" min={5} max={50} value={(trigger.config.sensitivity as number) ?? 20} onChange={(e) => updateConfig(index, "sensitivity", parseInt(e.target.value))} />
+                                    <span style={{ fontSize: 11, color: "var(--framer-color-text-tertiary)" }}>{trigger.config.sensitivity}px</span>
                                 </div>
                             )}
                             {trigger.type === "click" && (
                                 <div>
                                     <label>CSS Selector</label>
-                                    <input
-                                        type="text"
-                                        placeholder="#my-button, .cta-link"
-                                        value={(trigger.config.selector as string) ?? ""}
-                                        onChange={(e) =>
-                                            updateConfig(index, "selector", e.target.value)
-                                        }
-                                    />
+                                    <input type="text" placeholder="#my-button, .cta-link" value={(trigger.config.selector as string) ?? ""} onChange={(e) => updateConfig(index, "selector", e.target.value)} />
                                 </div>
                             )}
                             {trigger.type === "page-load" && (
@@ -136,16 +89,34 @@ export default function TriggerConfig() {
                             {trigger.type === "inactivity" && (
                                 <div>
                                     <label>Inactivity timeout (seconds)</label>
-                                    <input
-                                        type="number"
-                                        className="compact"
-                                        min={5}
-                                        max={300}
-                                        value={(trigger.config.seconds as number) ?? 30}
-                                        onChange={(e) =>
-                                            updateConfig(index, "seconds", parseInt(e.target.value))
-                                        }
-                                    />
+                                    <input type="number" className="compact" min={5} max={300} value={(trigger.config.seconds as number) ?? 30} onChange={(e) => updateConfig(index, "seconds", parseInt(e.target.value))} />
+                                </div>
+                            )}
+                            {trigger.type === "adblock" && (
+                                <div>
+                                    <label>Custom message for adblock users</label>
+                                    <input type="text" value={(trigger.config.message as string) ?? ""} onChange={(e) => updateConfig(index, "message", e.target.value)} placeholder="Please disable your ad blocker" />
+                                    <p style={{ fontSize: 10, marginTop: 4, color: "var(--framer-color-text-tertiary)" }}>
+                                        Detects ad blockers by inserting a test ad element. If blocked, the popup fires.
+                                    </p>
+                                </div>
+                            )}
+                            {trigger.type === "scroll-to-element" && (
+                                <div>
+                                    <label>CSS Selector of target element</label>
+                                    <input type="text" placeholder="#pricing-section, .cta-area" value={(trigger.config.selector as string) ?? ""} onChange={(e) => updateConfig(index, "selector", e.target.value)} />
+                                    <p style={{ fontSize: 10, marginTop: 4, color: "var(--framer-color-text-tertiary)" }}>
+                                        Uses IntersectionObserver. Popup triggers when element is 50% visible.
+                                    </p>
+                                </div>
+                            )}
+                            {trigger.type === "purchase-event" && (
+                                <div>
+                                    <label>Custom event name</label>
+                                    <input type="text" placeholder="purchase" value={(trigger.config.eventName as string) ?? "purchase"} onChange={(e) => updateConfig(index, "eventName", e.target.value)} />
+                                    <p style={{ fontSize: 10, marginTop: 4, color: "var(--framer-color-text-tertiary)" }}>
+                                        Fire this event on your page: <code>window.dispatchEvent(new Event('purchase'))</code>
+                                    </p>
                                 </div>
                             )}
                         </div>

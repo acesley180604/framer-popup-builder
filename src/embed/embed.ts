@@ -17,12 +17,37 @@ interface PbConfig {
     abTest?: ABTestDef
     integrations?: IntegrationDef[]
     variantId?: string | null
+    schedule?: ScheduleDef
 }
 
 interface TriggerDef {
     type: "time-delay" | "scroll" | "exit-intent" | "click" | "page-load" | "inactivity"
     enabled: boolean
     config: Record<string, string | number>
+}
+
+interface VideoDef {
+    enabled: boolean
+    url: string
+    autoplay: boolean
+    muted: boolean
+}
+
+interface AdvancedStyleDef {
+    backdropBlur?: number
+    borderWidth?: number
+    borderColor?: string
+    titleFontSize?: number
+    bodyFontSize?: number
+    buttonFontSize?: number
+    padding?: number
+}
+
+interface ScheduleDef {
+    enabled: boolean
+    startDate: string | null
+    endDate: string | null
+    timezone: string
 }
 
 interface PopupDef {
@@ -45,6 +70,9 @@ interface PopupDef {
     successMessage?: string
     redirectUrl?: string
     formFields?: FormFieldDef[]
+    video?: VideoDef
+    advancedStyle?: AdvancedStyleDef
+    forcedInteraction?: boolean
 }
 
 interface FormFieldDef {
@@ -150,6 +178,48 @@ interface IntegrationDef {
 
     function isValidEmail(email: string): boolean {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    }
+
+    // ── Video URL helpers ────────────────────────────────────────────────────────
+
+    function getVideoEmbedUrl(url: string, autoplay: boolean, muted: boolean): string | null {
+        // YouTube
+        let match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?\s]+)/)
+        if (match) {
+            const params = new URLSearchParams()
+            if (autoplay) params.set("autoplay", "1")
+            if (muted) params.set("mute", "1")
+            const qs = params.toString()
+            return `https://www.youtube.com/embed/${match[1]}${qs ? "?" + qs : ""}`
+        }
+
+        // Vimeo
+        match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+        if (match) {
+            const params = new URLSearchParams()
+            if (autoplay) params.set("autoplay", "1")
+            if (muted) params.set("muted", "1")
+            const qs = params.toString()
+            return `https://player.vimeo.com/video/${match[1]}${qs ? "?" + qs : ""}`
+        }
+
+        return null
+    }
+
+    // ── Schedule check ───────────────────────────────────────────────────────────
+
+    function isScheduleActive(schedule?: ScheduleDef): boolean {
+        if (!schedule || !schedule.enabled) return true
+        const now = new Date()
+        if (schedule.startDate) {
+            const start = new Date(schedule.startDate)
+            if (now < start) return false
+        }
+        if (schedule.endDate) {
+            const end = new Date(schedule.endDate)
+            if (now > end) return false
+        }
+        return true
     }
 
     // ── Page rule evaluation ────────────────────────────────────────────────────
@@ -404,6 +474,9 @@ interface IntegrationDef {
         const isFullscreen = pt === "fullscreen"
         const isBanner = isBannerTop || isBannerBottom
 
+        const advStyle = popup.advancedStyle
+        const backdropBlur = advStyle?.backdropBlur ?? 0
+
         // Overlay styles
         Object.assign(overlay.style, {
             position: "fixed",
@@ -423,6 +496,7 @@ interface IntegrationDef {
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              ...(backdropBlur > 0 ? { backdropFilter: `blur(${backdropBlur}px)`, WebkitBackdropFilter: `blur(${backdropBlur}px)` } : {}),
                           }),
         })
 
@@ -442,16 +516,19 @@ interface IntegrationDef {
             "0 20px 50px rgba(0,0,0,0.25)",
         ]
 
+        const customPadding = advStyle?.padding ?? 28
+
         Object.assign(box.style, {
             background: bg,
             color: popup.textColor || "#111827",
-            padding: isBanner ? "14px 24px" : "28px",
+            padding: isBanner ? "14px 24px" : `${customPadding}px`,
             borderRadius: isBanner ? "0" : `${popup.borderRadius ?? 12}px`,
             maxWidth: isFullscreen ? "100vw" : `${popup.maxWidth ?? 480}px`,
             width: isBanner ? "100%" : isSlideIn || isToast ? "340px" : "90%",
             boxShadow: shadowLevels[Math.min(popup.shadowIntensity ?? 3, 5)],
             fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
             position: "relative",
+            ...(advStyle?.borderWidth ? { border: `${advStyle.borderWidth}px solid ${advStyle.borderColor || "#e5e7eb"}` } : {}),
             ...(isBanner ? { display: "flex", alignItems: "center", gap: "16px" } : { textAlign: "center" }),
             ...(isFullscreen ? { maxHeight: "100vh", overflow: "auto" } : {}),
         })
@@ -472,9 +549,10 @@ interface IntegrationDef {
             overlay.appendChild(customStyle)
         }
 
-        // Close button
+        // Close button (hidden when forced interaction is enabled)
+        const isForcedInteraction = popup.forcedInteraction ?? false
         const closeStyle = popup.closeButtonStyle ?? "x"
-        if (closeStyle !== "none") {
+        if (closeStyle !== "none" && !isForcedInteraction) {
             const close = document.createElement("button")
             close.textContent = closeStyle === "text" ? "Close" : "\u00D7"
             Object.assign(close.style, {
@@ -502,6 +580,33 @@ interface IntegrationDef {
             box.appendChild(close)
         }
 
+        // Forced interaction: prevent backdrop click and Escape key
+        if (isForcedInteraction) {
+            overlay.addEventListener("click", (e) => {
+                if (e.target === overlay) e.stopPropagation()
+            })
+            const escHandler = (e: KeyboardEvent) => {
+                if (e.key === "Escape") e.preventDefault()
+            }
+            document.addEventListener("keydown", escHandler)
+            // Clean up on removal
+            const observer = new MutationObserver(() => {
+                if (!document.body.contains(overlay)) {
+                    document.removeEventListener("keydown", escHandler)
+                    observer.disconnect()
+                }
+            })
+            observer.observe(document.body, { childList: true })
+        } else {
+            // Allow backdrop click to close
+            overlay.addEventListener("click", (e) => {
+                if (e.target === overlay) {
+                    trackEvent(config, "close")
+                    overlay.remove()
+                }
+            })
+        }
+
         // Image
         if (popup.imageUrl && !isBanner) {
             const img = document.createElement("img")
@@ -518,6 +623,36 @@ interface IntegrationDef {
             box.appendChild(img)
         }
 
+        // Video embed
+        if (popup.video?.enabled && popup.video.url && !isBanner) {
+            const embedUrl = getVideoEmbedUrl(popup.video.url, popup.video.autoplay, popup.video.muted)
+            if (embedUrl) {
+                const videoWrap = document.createElement("div")
+                Object.assign(videoWrap.style, {
+                    position: "relative",
+                    width: "100%",
+                    paddingBottom: "56.25%", // 16:9 aspect ratio
+                    marginBottom: "14px",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                })
+                const iframe = document.createElement("iframe")
+                iframe.src = embedUrl
+                iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                iframe.allowFullscreen = true
+                Object.assign(iframe.style, {
+                    position: "absolute",
+                    top: "0",
+                    left: "0",
+                    width: "100%",
+                    height: "100%",
+                    border: "none",
+                })
+                videoWrap.appendChild(iframe)
+                box.appendChild(videoWrap)
+            }
+        }
+
         // Content wrapper for banner layout
         const contentWrap = isBanner ? document.createElement("div") : box
         if (isBanner) {
@@ -528,9 +663,10 @@ interface IntegrationDef {
         // Headline
         const h = document.createElement("h2")
         h.textContent = popup.headline
+        const titleSize = advStyle?.titleFontSize ?? (isBanner || isToast ? 15 : 22)
         Object.assign(h.style, {
             margin: "0 0 6px 0",
-            fontSize: isBanner || isToast ? "15px" : "22px",
+            fontSize: `${titleSize}px`,
             fontWeight: "700",
         })
         contentWrap.appendChild(h)
@@ -539,9 +675,10 @@ interface IntegrationDef {
         if (!isBanner) {
             const p = document.createElement("p")
             p.textContent = popup.body
+            const bodySize = advStyle?.bodyFontSize ?? (isToast ? 12 : 14)
             Object.assign(p.style, {
                 margin: "0 0 14px 0",
-                fontSize: isToast ? "12px" : "14px",
+                fontSize: `${bodySize}px`,
                 opacity: "0.8",
                 lineHeight: "1.5",
             })
@@ -590,6 +727,7 @@ interface IntegrationDef {
         // CTA button
         const btnColor = popup.buttonColor || "#3b82f6"
         const btnTextColor = popup.buttonTextColor || "#ffffff"
+        const btnFontSize = advStyle?.buttonFontSize ?? 14
         const btn = document.createElement("button")
         btn.textContent = popup.ctaText || "Submit"
         btn.id = "pb-cta-btn"
@@ -599,7 +737,7 @@ interface IntegrationDef {
             color: btnTextColor,
             border: "none",
             borderRadius: "6px",
-            fontSize: "14px",
+            fontSize: `${btnFontSize}px`,
             fontWeight: "600",
             cursor: "pointer",
             display: isBanner ? "inline-block" : "block",
@@ -802,6 +940,10 @@ interface IntegrationDef {
             console.warn("[Popup Builder] No configuration found. Add data-pb-config attribute.")
             return
         }
+
+        // Check campaign schedule
+        if (!isScheduleActive(config.schedule)) return
+
         if (!matchesTarget(config.targeting)) return
 
         // Graceful degradation: if exit-intent unavailable (mobile), skip that trigger

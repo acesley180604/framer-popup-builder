@@ -4,6 +4,8 @@ import {
     DEFAULT_CONTENT_LOCKER_CONFIG,
     DEFAULT_SPIN_WHEEL_CONFIG,
     DEFAULT_MULTI_STEP_CONFIG,
+    DEFAULT_VIDEO_CONFIG,
+    DEFAULT_ADVANCED_STYLE_CONFIG,
 } from "./defaults"
 
 const defaultAdvancedFeatures = {
@@ -11,6 +13,9 @@ const defaultAdvancedFeatures = {
     contentLocker: { ...DEFAULT_CONTENT_LOCKER_CONFIG },
     spinWheel: { ...DEFAULT_SPIN_WHEEL_CONFIG },
     multiStep: { ...DEFAULT_MULTI_STEP_CONFIG },
+    video: { ...DEFAULT_VIDEO_CONFIG },
+    advancedStyle: { ...DEFAULT_ADVANCED_STYLE_CONFIG },
+    forcedInteraction: false,
 } as const
 
 export interface PopupTemplate {

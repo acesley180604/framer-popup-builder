@@ -43,7 +43,11 @@ export function buildEmbedConfig(campaign: Campaign, analyticsUrl?: string): Rec
             contentLocker: campaign.popup_config.contentLocker,
             spinWheel: campaign.popup_config.spinWheel,
             multiStep: campaign.popup_config.multiStep,
+            video: campaign.popup_config.video,
+            advancedStyle: campaign.popup_config.advancedStyle,
+            forcedInteraction: campaign.popup_config.forcedInteraction,
         },
+        schedule: campaign.schedule,
         targeting: {
             visitorType: campaign.targeting_config.visitorType,
             deviceType: campaign.targeting_config.deviceType,
