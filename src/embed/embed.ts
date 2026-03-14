@@ -184,7 +184,7 @@ interface IntegrationDef {
 
     function getVideoEmbedUrl(url: string, autoplay: boolean, muted: boolean): string | null {
         // YouTube
-        let match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?\s]+)/)
+        let match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([^&?\s]+)/)
         if (match) {
             const params = new URLSearchParams()
             if (autoplay) params.set("autoplay", "1")
@@ -194,7 +194,7 @@ interface IntegrationDef {
         }
 
         // Vimeo
-        match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+        match = url.match(/(?:player\.)?vimeo\.com\/(?:video\/)?(\d+)/)
         if (match) {
             const params = new URLSearchParams()
             if (autoplay) params.set("autoplay", "1")
@@ -210,7 +210,18 @@ interface IntegrationDef {
 
     function isScheduleActive(schedule?: ScheduleDef): boolean {
         if (!schedule || !schedule.enabled) return true
-        const now = new Date()
+        // Convert current time to the campaign's timezone for comparison
+        let now: Date
+        if (schedule.timezone) {
+            try {
+                const tzString = new Date().toLocaleString("en-US", { timeZone: schedule.timezone })
+                now = new Date(tzString)
+            } catch {
+                now = new Date()
+            }
+        } else {
+            now = new Date()
+        }
         if (schedule.startDate) {
             const start = new Date(schedule.startDate)
             if (now < start) return false
@@ -475,7 +486,8 @@ interface IntegrationDef {
         const isBanner = isBannerTop || isBannerBottom
 
         const advStyle = popup.advancedStyle
-        const backdropBlur = advStyle?.backdropBlur ?? 0
+        // Clamp advanced style values to safe ranges
+        const backdropBlur = Math.max(0, Math.min(20, advStyle?.backdropBlur ?? 0))
 
         // Overlay styles
         Object.assign(overlay.style, {
@@ -516,7 +528,7 @@ interface IntegrationDef {
             "0 20px 50px rgba(0,0,0,0.25)",
         ]
 
-        const customPadding = advStyle?.padding ?? 28
+        const customPadding = Math.max(0, Math.min(100, advStyle?.padding ?? 28))
 
         Object.assign(box.style, {
             background: bg,
@@ -528,7 +540,7 @@ interface IntegrationDef {
             boxShadow: shadowLevels[Math.min(popup.shadowIntensity ?? 3, 5)],
             fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
             position: "relative",
-            ...(advStyle?.borderWidth ? { border: `${advStyle.borderWidth}px solid ${advStyle.borderColor || "#e5e7eb"}` } : {}),
+            ...(advStyle?.borderWidth ? { border: `${Math.max(0, Math.min(10, advStyle.borderWidth))}px solid ${advStyle.borderColor || "#e5e7eb"}` } : {}),
             ...(isBanner ? { display: "flex", alignItems: "center", gap: "16px" } : { textAlign: "center" }),
             ...(isFullscreen ? { maxHeight: "100vh", overflow: "auto" } : {}),
         })
@@ -589,10 +601,19 @@ interface IntegrationDef {
                 if (e.key === "Escape") e.preventDefault()
             }
             document.addEventListener("keydown", escHandler)
+            // Block browser back button
+            history.pushState(null, "", window.location.href)
+            const popstateHandler = () => {
+                if (document.body.contains(overlay)) {
+                    history.pushState(null, "", window.location.href)
+                }
+            }
+            window.addEventListener("popstate", popstateHandler)
             // Clean up on removal
             const observer = new MutationObserver(() => {
                 if (!document.body.contains(overlay)) {
                     document.removeEventListener("keydown", escHandler)
+                    window.removeEventListener("popstate", popstateHandler)
                     observer.disconnect()
                 }
             })
@@ -625,7 +646,9 @@ interface IntegrationDef {
 
         // Video embed
         if (popup.video?.enabled && popup.video.url && !isBanner) {
-            const embedUrl = getVideoEmbedUrl(popup.video.url, popup.video.autoplay, popup.video.muted)
+            // Force muted on mobile when autoplay is enabled (browsers require it)
+            const videoMuted = popup.video.autoplay && window.innerWidth < 768 ? true : popup.video.muted
+            const embedUrl = getVideoEmbedUrl(popup.video.url, popup.video.autoplay, videoMuted)
             if (embedUrl) {
                 const videoWrap = document.createElement("div")
                 Object.assign(videoWrap.style, {
@@ -663,7 +686,7 @@ interface IntegrationDef {
         // Headline
         const h = document.createElement("h2")
         h.textContent = popup.headline
-        const titleSize = advStyle?.titleFontSize ?? (isBanner || isToast ? 15 : 22)
+        const titleSize = Math.max(8, Math.min(60, advStyle?.titleFontSize ?? (isBanner || isToast ? 15 : 22)))
         Object.assign(h.style, {
             margin: "0 0 6px 0",
             fontSize: `${titleSize}px`,
@@ -675,7 +698,7 @@ interface IntegrationDef {
         if (!isBanner) {
             const p = document.createElement("p")
             p.textContent = popup.body
-            const bodySize = advStyle?.bodyFontSize ?? (isToast ? 12 : 14)
+            const bodySize = Math.max(8, Math.min(60, advStyle?.bodyFontSize ?? (isToast ? 12 : 14)))
             Object.assign(p.style, {
                 margin: "0 0 14px 0",
                 fontSize: `${bodySize}px`,
@@ -727,7 +750,7 @@ interface IntegrationDef {
         // CTA button
         const btnColor = popup.buttonColor || "#3b82f6"
         const btnTextColor = popup.buttonTextColor || "#ffffff"
-        const btnFontSize = advStyle?.buttonFontSize ?? 14
+        const btnFontSize = Math.max(8, Math.min(60, advStyle?.buttonFontSize ?? 14))
         const btn = document.createElement("button")
         btn.textContent = popup.ctaText || "Submit"
         btn.id = "pb-cta-btn"
