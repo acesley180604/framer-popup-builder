@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react"
+import { LicenseGate } from "@shared/index"
 import { AnimatePresence, motion } from "motion/react"
 import { useCampaignStore } from "./store/campaignStore"
 import { CampaignList } from "./components/CampaignList"
@@ -46,6 +47,7 @@ export function App() {
 
     if (!activeCampaignId || !campaign) {
         return (
+            <LicenseGate pluginSlug="popup-builder">
             <section>
                 <header className="row-between" style={{ padding: "12px 15px", borderBottom: "1px solid var(--framer-color-divider)" }}>
                     <div className="row gap-8">
@@ -62,12 +64,14 @@ export function App() {
                 {error && <Toast message={error} type="error" onDismiss={clearError} />}
                 <footer>Free plan active. Upgrade: Starter $19/mo | Growth $39/mo | Agency $79/mo</footer>
             </section>
+            </LicenseGate>
         )
     }
 
     const badgeClass = `badge badge-${campaign.status}`
 
     return (
+        <LicenseGate pluginSlug="popup-builder">
         <section>
             <header className="row-between" style={{ padding: "12px 15px", borderBottom: "1px solid var(--framer-color-divider)" }}>
                 <div className="row gap-8">
@@ -121,5 +125,6 @@ export function App() {
             {error && <Toast message={error} type="error" onDismiss={clearError} />}
             <footer>Free plan active. Upgrade: Starter $19/mo | Growth $39/mo | Agency $79/mo</footer>
         </section>
+        </LicenseGate>
     )
 }
